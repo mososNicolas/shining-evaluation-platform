@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Shining Like a Star</title>
@@ -7,8 +7,7 @@
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-        <!-- Añade este estilo para asegurar el sticky footer -->
-        <style>
+    <style>
         html, body {
             height: 100%;
         }
@@ -19,72 +18,128 @@
         main {
             flex: 1;
         }
-        </style>
+    </style>
 </head>
 <body class="d-flex flex-column min-vh-100 bg-light">
 
-    <!-- Contenido principal (DEBE envolver TODO excepto el footer) -->
+    <!-- MAIN CONTENT -->
     <main class="flex-grow-1">
         <!-- HERO / BANNER -->
         <header class="text-white bg-dark py-5 text-center">
             <div class="container">
                 <h1 class="display-4 fw-bold">Shining Like a Star ✨</h1>
-                <p class="lead">Celebrando el talento, el idioma y el arte en nuestra comunidad educativa</p>
+                <p class="lead">Celebrating talent, language, and art in our educational community</p>
+                <p class="fst-italic">New motto: <strong>"Voices Beyond Words"</strong></p>
             </div>
         </header>
 
-        <!-- DESCRIPCIÓN GENERAL -->
+        <!-- OVERVIEW SECTION -->
         <section class="container py-5">
             <div class="row g-4 text-center">
                 <div class="col-md-4">
                     <div class="card border-0 shadow h-100">
                         <div class="card-body">
-                            <h3 class="card-title">🎤 Participantes</h3>
-                            <p class="card-text">Estudiantes de todos los grados compiten en categorías según edad y nivel.</p>
+                            <h3 class="card-title">🎤 Participants</h3>
+                            <p class="card-text">Students from all grades compete in categories based on age and level.</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card border-0 shadow h-100">
                         <div class="card-body">
-                            <h3 class="card-title">🧑‍⚖️ Jurados</h3>
-                            <p class="card-text">Expertos en música e inglés evalúan con criterios objetivos y artísticos.</p>
+                            <h3 class="card-title">🧑‍⚖️ Judges</h3>
+                            <p class="card-text">Music and English experts evaluate using clear and artistic criteria.</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card border-0 shadow h-100">
                         <div class="card-body">
-                            <h3 class="card-title">📅 Día del Evento</h3>
-                            <p class="card-text">Presentaciones ágiles y emocionantes, organizadas por horarios específicos.</p>
+                            <h3 class="card-title">📅 Event Day</h3>
+                            <p class="card-text">Fast-paced and exciting performances, carefully scheduled by time slots.</p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- ACCESO A PANELES -->
-        <section class="bg-white py-5 border-top">
-            <div class="container text-center">
-                <h2 class="mb-4">Accede a tu panel</h2>
-                <div class="row justify-content-center">
-                    <div class="col-md-3">
-                        <a href="auth/login.php?rol=admin" class="btn btn-primary w-100">👨‍💼 Rector</a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="auth/login.php?rol=jurado&area=ingles" class="btn btn-secondary w-100">🌍 Jurado de Inglés</a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="auth/login.php?rol=jurado&area=musica" class="btn btn-warning w-100">🎵 Jurado de Música</a>
-                    </div>
+        
+        <!-- EVENT SCHEDULE -->
+        <section class="container py-5">
+            <h2 class="text-center mb-4">Event Schedule</h2>
+            <div class="table-responsive">
+                <table class="table table-bordered text-center align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Stage</th>
+                            <th>Description</th>
+                            <th>Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Opening</td>
+                            <td>Welcome, introduction of judges, acknowledgments</td>
+                            <td>15 minutes</td>
+                        </tr>
+                        <tr>
+                            <td>Kids (Solo & Group)</td>
+                            <td>20 performances (2 min each + 1 min video)</td>
+                            <td>~30 minutes</td>
+                        </tr>
+                        <tr>
+                            <td>Teens (Solo & Group)</td>
+                            <td>16 performances (same format)</td>
+                            <td>~30 minutes</td>
+                        </tr>
+                        <tr>
+                            <td>Seniors (Solo & Group)</td>
+                            <td>16 performances (same format)</td>
+                            <td>~30 minutes</td>
+                        </tr>
+                        <tr>
+                            <td>Break</td>
+                            <td>Interaction with guests and sponsors</td>
+                            <td>15–20 minutes</td>
+                        </tr>
+                        <tr>
+                            <td>Special Performance</td>
+                            <td>Guest school presents a non-competing act in English</td>
+                            <td>10 minutes</td>
+                        </tr>
+                        <tr>
+                            <td>Awards Ceremony</td>
+                            <td>Announcement of winners and prize distribution</td>
+                            <td>30 minutes</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted text-center mt-3">Total duration: Approximately 3.5 to 4 hours</p>
+        </section>
+    </main>
+    
+    <!-- DASHBOARD ACCESS -->
+    <section class="bg-white py-5 border-top">
+        <div class="container text-center">
+            <h2 class="mb-4">Access your panel</h2>
+            <div class="row justify-content-center">
+                <div class="col-md-3">
+                    <a href="auth/login.php?rol=admin" class="btn btn-primary w-100">👨‍💼 Principal</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="auth/login.php?rol=jurado&area=ingles" class="btn btn-secondary w-100">🌍 English Judge</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="auth/login.php?rol=jurado&area=musica" class="btn btn-warning w-100">🎵 Music Judge</a>
                 </div>
             </div>
-        </section>
-    </main> <!-- ¡CIERRA EL MAIN ANTES DEL FOOTER! -->
+        </div>
+    </section>
 
-    <!-- FOOTER (Incluido desde PHP) -->
+    <!-- FOOTER -->
     <?php include("includes/footer.php"); ?>
-
+    
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
