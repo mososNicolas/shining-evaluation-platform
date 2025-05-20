@@ -124,13 +124,13 @@
         <div class="container text-center">
             <h2 class="mb-4">Access your panel</h2>
             <div class="row justify-content-center">
-                <div class="col-md-3">
+                <div class="col-md-3 m-2">
                     <a href="auth/login.php?rol=admin" class="btn btn-primary w-100">👨‍💼 Principal</a>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 m-2">
                     <a href="auth/login.php?rol=jurado&area=ingles" class="btn btn-secondary w-100">🌍 English Judge</a>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 m-2">
                     <a href="auth/login.php?rol=jurado&area=musica" class="btn btn-warning w-100">🎵 Music Judge</a>
                 </div>
             </div>

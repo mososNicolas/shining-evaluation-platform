@@ -1,107 +1,11 @@
 <?php
 session_start();
 require_once("../includes/db.php");
+require_once("controlador/controlador.php");
 
 if ($_SESSION['rol'] !== 'admin') {
     header("Location: ../auth/login.php?rol=admin");
     exit;
-}
-
-// Consulta SQL corregida con ponderaciones y estructura adecuada
-$sql = "SELECT 
-    p.id,
-    p.nombre,
-    p.categoria,
-    p.modalidad,
-
-    /* Inglés (40%) - Promedio individual de 3 criterios entre 2 jurados */
-    (
-        (
-            COALESCE(AVG(ci.pronunciacion), 0) +
-            COALESCE(AVG(ci.fluidez), 0) +
-            COALESCE(AVG(ci.vocabulario), 0)
-        ) / 3
-    ) * 0.40 AS puntaje_ingles,
-
-    /* Música (35%) - Único jurado, promedio de 4 criterios */
-    (
-        (
-            COALESCE(MAX(cm.afinacion), 0) +
-            COALESCE(MAX(cm.ritmo*2), 0) +
-            COALESCE(MAX(cm.proyeccion_vocal), 0) +
-            COALESCE(MAX(cm.interpretacion), 0)
-        ) / 4
-    ) * 0.35 AS puntaje_musica,
-
-    /* Creatividad (25%) - Promedio de visuales entre inglés (promedio de 2 jurados) y música (único jurado) */
-    (
-        (
-            (
-                COALESCE(AVG(ci.story_time), 0) + 
-                COALESCE(AVG(ci.diseno_escenico), 0)
-            ) / 2
-            +
-            (
-                COALESCE(MAX(cm.story_time), 0) + 
-                COALESCE(MAX(cm.diseno_escenico), 0)
-            ) / 2
-        ) / 2
-    ) * 0.25 AS puntaje_visual,
-
-    /* Total real ponderado */
-    (
-        (
-            (
-                COALESCE(AVG(ci.pronunciacion), 0) +
-                COALESCE(AVG(ci.fluidez), 0) +
-                COALESCE(AVG(ci.vocabulario), 0)
-            ) / 3 * 0.40
-        ) +
-        (
-            (
-                COALESCE(MAX(cm.afinacion), 0) +
-                COALESCE(MAX(cm.ritmo), 0) +
-                COALESCE(MAX(cm.proyeccion_vocal), 0) +
-                COALESCE(MAX(cm.interpretacion), 0)
-            ) / 4 * 0.35
-        ) +
-        (
-            (
-                (
-                    (COALESCE(AVG(ci.story_time), 0) + COALESCE(AVG(ci.diseno_escenico), 0)) / 2
-                    +
-                    (COALESCE(MAX(cm.story_time), 0) + COALESCE(MAX(cm.diseno_escenico), 0)) / 2
-                ) / 2
-            ) * 0.25
-        )
-    ) AS total
-
-FROM participantes p
-LEFT JOIN calificaciones_ingles ci ON p.id = ci.participante_id
-LEFT JOIN calificaciones_musica cm ON p.id = cm.participante_id
-GROUP BY p.id, p.nombre, p.categoria, p.modalidad
-ORDER BY p.categoria, p.modalidad, total DESC";
-
-$resultado = $conexion->query($sql);
-if (!$resultado) {
-    die("Error en la consulta SQL: " . $conexion->error);
-}
-
-// Registro de nuevo participante
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nuevo_participante'])) {
-    $nombre = $conexion->real_escape_string($_POST['nombre']);
-    $categoria = $conexion->real_escape_string($_POST['categoria']);
-    $modalidad = $conexion->real_escape_string($_POST['modalidad']);
-    $colegio = $conexion->real_escape_string($_POST['colegio']);
-
-    $sql_insert = "INSERT INTO participantes (nombre, categoria, modalidad, colegio) VALUES (?, ?, ?, ?)";
-    $stmt = $conexion->prepare($sql_insert);
-    $stmt->bind_param("ssss", $nombre, $categoria, $modalidad, $colegio);
-
-    if ($stmt->execute()) {
-        header("Location: dashboard.php?participante_id=" . $conexion->insert_id);
-        exit;
-    }
 }
 ?>
 
@@ -111,31 +15,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nuevo_participante'])
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Admin</title>
-    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
         html, body {
             height: 100%;
             margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         body {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            background-color: #f8f9fa;
         }
         .container {
             flex: 1;
+            padding-top: 20px;
         }
         footer {
             background-color: #222;
             color: white;
             padding: 1rem;
             text-align: center;
+            margin-top: 20px;
         }
         .group-header {
-            background-color: #f2f2f2;
+            background-color: #e9ecef;
             font-weight: bold;
             text-transform: uppercase;
+        }
+        .group-header td {
+            font-size: 1.1em;
+            letter-spacing: 1px;
+        }
+        .participant-row td {
+            vertical-align: middle;
+        }
+        .detail-info {
+            font-size: 0.85em;
+            color: #6c757d;
+            display: block;
+            margin-top: 3px;
         }
         .print-only {
             display: none;
@@ -151,6 +73,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nuevo_participante'])
                 font-size: 12px;
             }
         }
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+        .total-cell {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .no-calification {
+            color: #dc3545;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -158,100 +91,191 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nuevo_participante'])
 <?php include("../includes/header.php"); ?>
 
 <div class="container mt-4">
-    <h2 class="mb-4">Resultados Generales</h2>
+    <h2 class="mb-4 text-center">Resultados Generales</h2>
 
-    <!-- Tabla de resultados -->
     <div class="table-responsive mb-4">
-        <table class="table table-bordered w-100" id="tabla-resultados">
+        <table class="table table-striped table-hover w-100" id="tabla-resultados">
             <thead class="table-dark">
                 <tr>
                     <th>Nombre</th>
                     <th>Categoría</th>
                     <th>Modalidad</th>
-                    <th>Inglés (40%)</th>
+                    <th>Inglés #1 (20%)</th>
+                    <th>Inglés #2 (20%)</th>
                     <th>Música (35%)</th>
                     <th>Creatividad (25%)</th>
                     <th>Puntaje Total</th>
                 </tr>
             </thead>
             <tbody>
-                <?php
-                $categoria_actual = '';
-                $modalidad_actual = '';
-                while ($fila = $resultado->fetch_assoc()):
-                    if ($fila['categoria'] !== $categoria_actual || $fila['modalidad'] !== $modalidad_actual):
-                        $categoria_actual = $fila['categoria'];
-                        $modalidad_actual = $fila['modalidad'];
-                ?>
-                    <tr class="group-header">
-                        <td colspan="7"><?= strtoupper($categoria_actual . " - " . $modalidad_actual) ?></td>
-                    </tr>
-                <?php endif; ?>
-                    <tr>
-                        <td><?= htmlspecialchars($fila['nombre']) ?></td>
-                        <td><?= htmlspecialchars($fila['categoria']) ?></td>
-                        <td><?= htmlspecialchars($fila['modalidad']) ?></td>
-                        <td><?= number_format($fila['puntaje_ingles'], 2) ?></td>
-                        <td><?= number_format($fila['puntaje_musica'], 2) ?></td>
-                        <td><?= number_format($fila['puntaje_visual'], 2) ?></td>
-                        <td><strong><?= number_format($fila['total'], 2) ?></strong></td>
-                    </tr>
-                <?php endwhile; ?>
+                <!-- Los datos se cargarán via AJAX -->
             </tbody>
         </table>
     </div>
 
-    <button onclick="window.print()" class="btn btn-success mb-5 no-print">Imprimir Resultados</button>
+    <div class="d-flex justify-content-between mb-5 no-print">
+        <button onclick="window.print()" class="btn btn-success">
+            <i class="bi bi-printer"></i> Imprimir Resultados
+        </button>
+        <button id="exportExcel" class="btn btn-primary">
+            <i class="bi bi-file-excel"></i> Exportar a Excel
+        </button>
+    </div>
 
-    <!-- Formulario de nuevo participante (oculto al imprimir) -->
     <div class="card no-print">
         <div class="card-header bg-info text-white">
-            <h5>Registrar Nuevo Participante</h5>
+            <h5 class="mb-0"><i class="bi bi-person-plus"></i> Registrar Nuevo Participante</h5>
         </div>
         <div class="card-body">
-            <form method="POST">
-                <div class="row">
+            <form method="POST" id="formParticipante">
+                <div class="row g-3">
                     <div class="col-md-4">
-                        <div class="mb-3">
-                            <label class="form-label">Nombre Completo</label>
-                            <input type="text" name="nombre" class="form-control" required>
+                        <div class="form-floating">
+                            <input type="text" name="nombre" class="form-control" id="nombreInput" required>
+                            <label for="nombreInput">Nombre Completo</label>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="mb-3">
-                            <label class="form-label">Colegio</label>
-                            <input type="text" name="colegio" class="form-control" required>
+                        <div class="form-floating">
+                            <input type="text" name="colegio" class="form-control" id="colegioInput" required>
+                            <label for="colegioInput">Colegio</label>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="mb-3">
-                            <label class="form-label">Categoría</label>
-                            <select name="categoria" class="form-select" required>
+                        <div class="form-floating">
+                            <select name="categoria" class="form-select" id="categoriaSelect" required>
                                 <option value="kids">Kids (1°-5°)</option>
                                 <option value="teens">Teens (6°-9°)</option>
                                 <option value="seniors">Seniors (10°-11°)</option>
                             </select>
+                            <label for="categoriaSelect">Categoría</label>
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="mb-3">
-                            <label class="form-label">Modalidad</label>
-                            <select name="modalidad" class="form-select" required>
+                        <div class="form-floating">
+                            <select name="modalidad" class="form-select" id="modalidadSelect" required>
                                 <option value="solistas">Solista</option>
                                 <option value="grupos">Grupo</option>
                             </select>
+                            <label for="modalidadSelect">Modalidad</label>
                         </div>
                     </div>
                 </div>
-                <button type="submit" name="nuevo_participante" class="btn btn-primary">
-                    Registrar Participante
-                </button>
+                <div class="mt-3 text-end">
+                    <button type="submit" name="nuevo_participante" class="btn btn-primary btn-lg">
+                        <i class="bi bi-save"></i> Registrar Participante
+                    </button>
+                </div>
             </form>
         </div>
     </div>
 </div>
 
 <?php include("../includes/footer.php"); ?>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+$(document).ready(function () {
+    // Convertir datos PHP a JavaScript
+    var tableData = <?php echo json_encode($data); ?>;
+    
+    // Filtrar para eliminar las filas de grupo (las que tienen DT_RowClass === 'group-header')
+    var filteredData = tableData.filter(function(item) {
+        return item.DT_RowClass !== 'group-header';
+    });
+    
+    // Inicializar DataTable
+    var table = $('#tabla-resultados').DataTable({
+        data: filteredData,  // Usamos los datos filtrados
+        columns: [
+            { data: 'nombre' },
+            { data: 'categoria' },
+            { data: 'modalidad' },
+            { 
+                data: 'ingles1',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        return data + '<span class="detail-info">' + (row.detalle.split(' | ')[0] || 'N/A') + '</span>';
+                    }
+                    return data;
+                }
+            },
+            { 
+                data: 'ingles2',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        return data + '<span class="detail-info">' + (row.detalle.split(' | ')[1] || 'N/A') + '</span>';
+                    }
+                    return data;
+                }
+            },
+            { data: 'musica' },
+            { data: 'visual' },
+            { 
+                data: 'total',
+                className: 'total-cell',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        if (parseFloat(data) > 0) {
+                            return '<strong>' + data + '</strong>';
+                        } else {
+                            return '<span class="no-calification">Sin calificación</span>';
+                        }
+                    }
+                    return data;
+                }
+            }
+        ],
+        // Eliminamos el createdRow que manejaba las filas de grupo
+        order: [[1, 'asc'], [2, 'asc'], [7, 'desc']],  // Ordenar por categoría, modalidad y total
+        dom: 'Bfrtip',
+        buttons: [
+            {
+                extend: 'excel',
+                text: '<i class="bi bi-file-excel"></i> Excel',
+                className: 'btn btn-success',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4, 5, 6, 7]  // Exportar todas las columnas visibles
+                }
+            }
+        ],
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+        },
+        initComplete: function() {
+            // Opcional: agregar separadores visuales después de cada grupo
+            var api = this.api();
+            var lastCategory = '';
+            var lastModalidad = '';
+            
+            api.rows().every(function() {
+                var row = this.node();
+                var data = this.data();
+                
+                if (data.categoria !== lastCategory || data.modalidad !== lastModalidad) {
+                    $(row).css('border-top', '2px solid #dee2e6');
+                    lastCategory = data.categoria;
+                    lastModalidad = data.modalidad;
+                }
+            });
+        }
+    });
+
+    // Exportar a Excel
+    $('#exportExcel').on('click', function() {
+        table.button('.buttons-excel').trigger();
+    });
+    
+    // Tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+});
+</script>
 </body>
 </html>
