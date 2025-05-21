@@ -1,3 +1,46 @@
 body {
     margin-bottom: 80px;
 }
+
+:root {
+    --main-blue: #083ca4;
+    --neon-green: #00D28A;
+    --bright-yellow: #FFD700;
+    --soft-white: #FFFFFF;
+    --star-purple: #1e1e3f;
+}
+
+body {
+    background-color: var(--main-blue);
+    color: var(--soft-white);
+    font-family: 'Poppins', sans-serif;
+}
+
+.card {
+    background-color: var(--soft-white);
+    color: var(--main-blue);
+    border-radius: 1rem;
+}
+
+.btn-primary {
+    background-color: var(--bright-yellow);
+    border: none;
+    color: var(--main-blue);
+    font-weight: bold;
+}
+
+h1, h2, h3 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+}
+
+p, small {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+}
+
+.inicio-link:hover h1 {
+    text-decoration: underline;
+    cursor: pointer;
+    opacity: 0.8;
+}

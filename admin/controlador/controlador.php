@@ -1,11 +1,11 @@
 <?php
-
-// Consulta SQL 
+// Consulta SQL optimizada
 $sql = "SELECT 
     p.id,
     p.nombre,
     p.categoria,
     p.modalidad,
+    p.colegio,
 
     /* Puntaje Inglés - Juez 1 */
     (
@@ -38,7 +38,7 @@ $sql = "SELECT
 
     /* Puntaje Música */
     (
-        SELECT IFNULL((afinacion + ritmo + proyeccion_vocal + interpretacion) / 4 * 0.35, 0)
+        SELECT IFNULL((afinacion + ritmo + proyeccion_vocal + interpretacion*2) / 4 * 0.35, 0)
         FROM calificaciones_musica
         WHERE participante_id = p.id
         LIMIT 1
@@ -79,7 +79,7 @@ $sql = "SELECT
         )
         +
         /* Música (35%) */
-        (SELECT IFNULL((afinacion + ritmo + proyeccion_vocal + interpretacion) / 4 * 0.35, 0)
+        (SELECT IFNULL((afinacion + ritmo + proyeccion_vocal + interpretacion*2) / 4 * 0.35, 0)
          FROM calificaciones_musica
          WHERE participante_id = p.id
          LIMIT 1)
@@ -103,7 +103,7 @@ $sql = "SELECT
 FROM participantes p
 LEFT JOIN calificaciones_ingles ci ON p.id = ci.participante_id
 LEFT JOIN calificaciones_musica cm ON p.id = cm.participante_id
-GROUP BY p.id, p.nombre, p.categoria, p.modalidad
+GROUP BY p.id, p.nombre, p.categoria, p.modalidad, p.colegio
 ORDER BY p.categoria, p.modalidad, total DESC";
 
 $resultado = $conexion->query($sql);
@@ -111,15 +111,16 @@ if (!$resultado) {
     die("Error en la consulta SQL: " . $conexion->error);
 }
 
-// Preparar datos para DataTables - VERSIÓN MODIFICADA
+// Preparar datos para DataTables
 $data = array();
 
 while ($fila = $resultado->fetch_assoc()) {
-    // Solo agregamos filas de participantes, omitimos las de grupo
     $data[] = array(
+        'id' => $fila['id'],
         'nombre' => htmlspecialchars($fila['nombre']),
         'categoria' => htmlspecialchars($fila['categoria']),
         'modalidad' => htmlspecialchars($fila['modalidad']),
+        'colegio' => htmlspecialchars($fila['colegio']),
         'ingles1' => number_format($fila['puntaje_ingles1'], 2),
         'ingles2' => number_format($fila['puntaje_ingles2'], 2),
         'musica' => number_format($fila['puntaje_musica'], 2),
@@ -127,7 +128,23 @@ while ($fila = $resultado->fetch_assoc()) {
         'total' => ($fila['total'] > 0) ? number_format($fila['total'], 2) : 0,
         'detalle' => $fila['detalle_jueces'] ?? 'N/A'
     );
+}
+
+// Procesar nuevo participante si se envió el formulario
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nuevo_participante'])) {
+    $nombre = $conexion->real_escape_string($_POST['nombre']);
+    $colegio = $conexion->real_escape_string($_POST['colegio']);
+    $categoria = $conexion->real_escape_string($_POST['categoria']);
+    $modalidad = $conexion->real_escape_string($_POST['modalidad']);
     
-    // HEMOS ELIMINADO COMPLETAMENTE EL BLOQUE QUE GENERABA LAS FILAS DE GRUPO
+    $sql_insert = "INSERT INTO participantes (nombre, colegio, categoria, modalidad) 
+                  VALUES ('$nombre', '$colegio', '$categoria', '$modalidad')";
+    
+    if ($conexion->query($sql_insert)) {
+        header("Location: ../dashboard.php?nuevo=1");
+        exit;
+    } else {
+        die("Error al registrar participante: " . $conexion->error);
+    }
 }
 ?>

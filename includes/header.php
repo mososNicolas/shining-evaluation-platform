@@ -1,31 +1,23 @@
 <?php
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Define la URL base del proyecto
 if (!defined('BASE_URL')) {
-    define('BASE_URL', '/ShiningLikeAStar/');
+    require_once __DIR__ . '/config.php';
 }
-?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Shining Like a Star</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Estilos personalizados -->
-    <link rel="stylesheet" href="<?= BASE_URL ?>css/style.css">
-</head>
-<body>
 
-<!-- NAVBAR CON TÍTULO CENTRADO -->
-<nav class="navbar navbar-dark" style="background-color: #1e1e3f;">
-    <div class="container d-flex justify-content-center">
-        <a class="navbar-brand text-center text-light fw-bold fs-4" href="<?= BASE_URL ?>index.php">
-            🌟 <span style="color: #ffd700;">Shining</span> Like a Star
+$archivoActual = basename($_SERVER['PHP_SELF']);
+$esInicio = $archivoActual === 'index.php';
+?>
+
+<header class="py-4 <?php echo $esInicio ? 'bg-primary text-white' : 'bg-white border-bottom'; ?>">
+    <div class="container d-flex justify-content-between align-items-center">
+        <!-- Logo o título que siempre lleva al inicio -->
+        <a href="<?php echo BASE_URL; ?>index.php" class="text-decoration-none <?php echo $esInicio ? 'text-white' : 'text-dark'; ?>">
+            <h1 class="h4 m-0">Shining festival</h1>
         </a>
+
+
+        <!-- Solo mostramos el usuario logueado si no es el index -->
+        <?php if (!$esInicio && isset($_SESSION['nombre'])): ?>
+            <span class="text-muted small">Welcome, <?php echo htmlspecialchars($_SESSION['nombre']); ?></span>
+        <?php endif; ?>
     </div>
-</nav>
+</header>

@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['evaluar_participante'
                      $fluidez, $vocabulario, $story_time, $diseno_escenico, $comentarios);
     
     if ($stmt->execute()) {
-        header("Location: dashboard.php?evaluado=1");
+        header(header: "Location: dashboard.php?evaluado=1");
         exit;
     } else {
         die("Error al registrar evaluación: " . $stmt->error);
@@ -86,29 +86,32 @@ if ($pendientes === false) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-    html, body {
-        height: 100%;
-        margin: 0;
-    }
-
-    body {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-    }
-
-    .container {
-        flex: 1;
-    }
-
-    footer {
-        background-color: #222;
-        color: white;
-        padding: 1rem;
-        text-align: center;
-    }
-</style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+    
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+    
+        .container {
+            flex: 1;
+        }
+    
+        footer {
+            background-color: #222;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+    </style>
 
 </head>
 <body>

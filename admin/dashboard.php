@@ -46,10 +46,6 @@ if ($_SESSION['rol'] !== 'admin') {
             font-weight: bold;
             text-transform: uppercase;
         }
-        .group-header td {
-            font-size: 1.1em;
-            letter-spacing: 1px;
-        }
         .participant-row td {
             vertical-align: middle;
         }
@@ -84,6 +80,29 @@ if ($_SESSION['rol'] !== 'admin') {
             color: #dc3545;
             font-weight: bold;
         }
+
+        .dropdown-menu {
+            position: fixed !important;  /* Cambiado de absolute a fixed */
+            transform: none !important;
+            top: auto !important;
+            left: auto !important;
+            margin: 0 !important;
+            will-change: transform;
+            z-index: 1060 !important;
+        }
+
+        .dataTables_scrollBody {
+            overflow: visible !important;
+        }
+
+        .table.dataTable {
+            margin-bottom: 0 !important;
+        }
+
+        /* Asegura que el contenedor padre no limite el dropdown */
+        .dataTables_wrapper .dataTables_scroll {
+            overflow: visible !important;
+        }
     </style>
 </head>
 <body>
@@ -105,6 +124,7 @@ if ($_SESSION['rol'] !== 'admin') {
                     <th>Música (35%)</th>
                     <th>Creatividad (25%)</th>
                     <th>Puntaje Total</th>
+                    <th class="no-print">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -121,6 +141,7 @@ if ($_SESSION['rol'] !== 'admin') {
             <i class="bi bi-file-excel"></i> Exportar a Excel
         </button>
     </div>
+
 
     <div class="card no-print">
         <div class="card-header bg-info text-white">
@@ -171,12 +192,18 @@ if ($_SESSION['rol'] !== 'admin') {
     </div>
 </div>
 
+
 <?php include("../includes/footer.php"); ?>
 
+<!-- jQuery y DataTables -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<!-- Bootstrap (solo bundle, incluye Popper) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Botones de DataTables + JSZip -->
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -185,15 +212,10 @@ if ($_SESSION['rol'] !== 'admin') {
 $(document).ready(function () {
     // Convertir datos PHP a JavaScript
     var tableData = <?php echo json_encode($data); ?>;
-    
-    // Filtrar para eliminar las filas de grupo (las que tienen DT_RowClass === 'group-header')
-    var filteredData = tableData.filter(function(item) {
-        return item.DT_RowClass !== 'group-header';
-    });
-    
-    // Inicializar DataTable
+
+    // Inicializar DataTable directamente con los datos
     var table = $('#tabla-resultados').DataTable({
-        data: filteredData,  // Usamos los datos filtrados
+        data: tableData,
         columns: [
             { data: 'nombre' },
             { data: 'categoria' },
@@ -231,10 +253,43 @@ $(document).ready(function () {
                     }
                     return data;
                 }
+            },
+            { 
+                data: 'id',
+                className: 'no-print',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        return `
+                            <div class="d-flex">
+                                <div class="dropdown me-1">
+                                    <button class="btn btn-sm btn-danger dropdown-toggle" type="button" id="dropdownIngles${data}" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-trash"></i> Inglés
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdownIngles${data}">
+                                        <li><a class="dropdown-item delete-btn" href="#" data-id="${data}" data-type="ingles" data-jurado="2">Jurado Inglés 1</a></li>
+                                        <li><a class="dropdown-item delete-btn" href="#" data-id="${data}" data-type="ingles" data-jurado="3">Jurado Inglés 2</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item delete-btn" href="#" data-id="${data}" data-type="ingles">Todos los jueces</a></li>
+                                    </ul>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-warning dropdown-toggle" type="button" id="dropdownMusica${data}" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-trash"></i> Música
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdownMusica${data}">
+                                        <li><a class="dropdown-item delete-btn" href="#" data-id="${data}" data-type="musica" data-jurado="4">Jurado Música</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item delete-btn" href="#" data-id="${data}" data-type="musica">Todos los jueces</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    return data;
+                }
             }
         ],
-        // Eliminamos el createdRow que manejaba las filas de grupo
-        order: [[1, 'asc'], [2, 'asc'], [7, 'desc']],  // Ordenar por categoría, modalidad y total
+        order: [[1, 'asc'], [2, 'asc'], [7, 'desc']],
         dom: 'Bfrtip',
         buttons: [
             {
@@ -242,40 +297,79 @@ $(document).ready(function () {
                 text: '<i class="bi bi-file-excel"></i> Excel',
                 className: 'btn btn-success',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7]  // Exportar todas las columnas visibles
+                    columns: [0, 1, 2, 3, 4, 5, 6, 7]
                 }
             }
         ],
         language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+            url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
         },
-        initComplete: function() {
-            // Opcional: agregar separadores visuales después de cada grupo
-            var api = this.api();
-            var lastCategory = '';
-            var lastModalidad = '';
-            
-            api.rows().every(function() {
-                var row = this.node();
-                var data = this.data();
-                
-                if (data.categoria !== lastCategory || data.modalidad !== lastModalidad) {
-                    $(row).css('border-top', '2px solid #dee2e6');
-                    lastCategory = data.categoria;
-                    lastModalidad = data.modalidad;
+        drawCallback: function(settings) {
+            // Reinicializar los dropdowns de Bootstrap después de cada redibujado
+            $('.dropdown-toggle').dropdown();
+        },
+        responsive: true
+    });
+
+    $('#exportExcel').on('click', function() {
+        table.button('.buttons-excel').trigger();
+    });
+
+    // Manejar clics en los botones de dropdown manualmente
+    $(document).on('click', '.dropdown-toggle', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Cerrar otros dropdowns abiertos
+        $('.dropdown-menu').not($(this).next('.dropdown-menu')).hide();
+        
+        // Alternar el dropdown actual
+        $(this).next('.dropdown-menu').toggle();
+    });
+
+    // Cerrar dropdowns al hacer clic fuera
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.dropdown').length) {
+            $('.dropdown-menu').hide();
+        }
+    });
+
+    $(document).on('click', '.delete-btn', function(e) {
+        e.preventDefault();
+        const participanteId = $(this).data('id');
+        const tipo = $(this).data('type');
+        const juradoId = $(this).data('jurado');
+
+        const mensaje = juradoId 
+            ? `¿Está seguro que desea eliminar las calificaciones de ${tipo} del jurado seleccionado para este participante?`
+            : `¿Está seguro que desea eliminar TODAS las calificaciones de ${tipo} para este participante?`;
+
+        if (confirm(mensaje)) {
+            $.ajax({
+                url: 'controlador/eliminar_calificaciones.php',
+                method: 'POST',
+                data: {
+                    participante_id: participanteId,
+                    tipo: tipo,
+                    jurado_id: juradoId || ''
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        alert('Calificaciones eliminadas correctamente');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (response.error || 'No se pudo eliminar'));
+                    }
+                },
+                error: function() {
+                    alert('Error en la conexión con el servidor');
                 }
             });
         }
     });
-
-    // Exportar a Excel
-    $('#exportExcel').on('click', function() {
-        table.button('.buttons-excel').trigger();
-    });
-    
-    // Tooltips
-    $('[data-toggle="tooltip"]').tooltip();
 });
 </script>
+
 </body>
 </html>
