@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form method="POST" class="mx-auto" style="max-width: 400px;">
             <div class="mb-3">
-                <label for="clave" class="form-label">Clave asignada</label>
+                <label for="clave" class="form-label">Usuario Asignado</label>
                 <input type="text" name="clave" id="clave" class="form-control" required>
             </div>
             <div class="mb-3">

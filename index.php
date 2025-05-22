@@ -117,10 +117,10 @@
             <h2 class="mb-4" style="color: var(--main-blue);">Access your panel</h2>
             <div class="row justify-content-center">
                 <div class="col-md-3 m-2">
-                    <a href="auth/login.php?rol=admin" class="btn btn-primary w-100">👨‍💼 Principal</a>
+                    <a href="auth/login.php?rol=admin" class="btn btn-primary w-100">👨‍💼 Bilingualism Coordination</a>
                 </div>
                 <div class="col-md-3 m-2">
-                    <a href="auth/login.php?rol=jurado&area=ingles" class="btn btn-secondary w-100">🌍 English Judge</a>
+                    <a href="auth/login.php?rol=jurado&area=ingles" class="btn btn-secondary w-100">🌍 English Judges</a>
                 </div>
                 <div class="col-md-3 m-2">
                     <a href="auth/login.php?rol=jurado&area=musica" class="btn btn-warning w-100">🎵 Music Judge</a>

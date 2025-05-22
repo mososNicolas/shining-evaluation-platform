@@ -142,6 +142,79 @@ if ($_SESSION['rol'] !== 'admin') {
         </button>
     </div>
 
+<?php
+// Agrupar por categoría y modalidad
+$agrupados = [];
+
+foreach ($data as $p) {
+    $clave = $p['categoria'] . '|' . $p['modalidad'];
+    $total = floatval($p['total']);
+
+    if (!is_numeric($total) || $total <= 0) continue;
+
+    $agrupados[$clave][] = $p;
+}
+
+// Ordenar y sacar top 3 de cada grupo
+$top3 = [];
+
+foreach ($agrupados as $clave => $participantes) {
+    usort($participantes, fn($a, $b) => floatval($b['total']) <=> floatval($a['total']));
+    $top3[$clave] = array_slice($participantes, 0, 3);
+}
+?>
+
+<div class="card mt-5">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-star-fill"></i> Mejores 3 por Categoría y Modalidad</h5>
+    </div>
+    <div class="card-body">
+        <?php if (!empty($top3)): ?>
+            <?php foreach ($top3 as $clave => $participantes): ?>
+                <?php
+                    [$categoria, $modalidad] = explode('|', $clave);
+                    $titulo = "Top 3 - " . ucfirst($categoria) . " - " . ucfirst($modalidad);
+                ?>
+                <h6 class="mt-4 text-primary fw-bold"><?= $titulo ?></h6>
+                <div class="table-responsive mb-3">
+                    <table class="table table-bordered table-hover align-middle text-center">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Posición</th>
+                                <th>Nombre</th>
+                                <th>Colegio</th>
+                                <th>Puntaje Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($participantes as $index => $p): ?>
+                                <tr>
+                                    <td>
+                                        <?php if ($index === 0): ?>
+                                            🥇
+                                        <?php elseif ($index === 1): ?>
+                                            🥈
+                                        <?php elseif ($index === 2): ?>
+                                            🥉
+                                        <?php endif; ?>
+                                        <?= $index + 1 ?>
+                                    </td>
+                                    <td><?= htmlspecialchars($p['nombre']) ?></td>
+                                    <td><?= htmlspecialchars($p['colegio']) ?></td>
+                                    <td class="fw-bold"><?= number_format($p['total'], 2) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="alert alert-warning text-center">
+                <i class="bi bi-exclamation-circle"></i> No hay participantes con calificaciones aún.
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
 
     <div class="card no-print">
         <div class="card-header bg-info text-white">

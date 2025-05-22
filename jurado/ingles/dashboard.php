@@ -246,27 +246,51 @@ if ($pendientes === false) {
         <?php endif; ?>
     </div>
     
-    <script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('form');
+
+    form.addEventListener('submit', function(event) {
+        let errores = [];
+        const campos = ['pronunciacion', 'fluidez', 'vocabulario', 'story_time', 'diseno_escenico'];
+
+        campos.forEach(nombre => {
+            const input = document.querySelector(`input[name="${nombre}"]`);
+            const valor = parseFloat(input.value);
+            if (isNaN(valor) || valor < 0 || valor > 10) {
+                errores.push(`El valor de "${nombre.replace('_', ' ')}" debe estar entre 0 y 10.`);
+            }
+        });
+
+        if (errores.length > 0) {
+            event.preventDefault(); // Detiene el envío del formulario
+            alert("Corrige los siguientes errores:\n\n" + errores.join('\n'));
+        }
+    });
+
     // Cálculo automático de puntajes
     document.querySelectorAll('input[type="number"]').forEach(input => {
         input.addEventListener('input', calcularTotales);
     });
-    
+
     function calcularTotales() {
-        // Suma inglés (3 criterios de 10 puntos cada uno)
         const ingles = [
-            parseInt(document.querySelector('input[name="pronunciacion"]').value) || 0,
-            parseInt(document.querySelector('input[name="fluidez"]').value) || 0,
-            parseInt(document.querySelector('input[name="vocabulario"]').value) || 0
+            parseFloat(document.querySelector('input[name="pronunciacion"]').value) || 0,
+            parseFloat(document.querySelector('input[name="fluidez"]').value) || 0,
+            parseFloat(document.querySelector('input[name="vocabulario"]').value) || 0
         ].reduce((a, b) => a + b, 0);
-        
-        // Creatividad (1 criterio de 10 puntos)
-        const creatividad = parseInt(document.querySelector('input[name="creatividad"]').value) || 0;
-        
+
+        const visual = [
+            parseFloat(document.querySelector('input[name="story_time"]').value) || 0,
+            parseFloat(document.querySelector('input[name="diseno_escenico"]').value) || 0
+        ].reduce((a, b) => a + b, 0);
+
         document.getElementById('total_ingles').textContent = ingles;
-        document.getElementById('total_creatividad').textContent = creatividad;
+        document.getElementById('total_visual').textContent = visual;
     }
-    </script>
+});
+</script>
+
     
     <?php include("../../includes/footer.php"); ?>
 </body>
